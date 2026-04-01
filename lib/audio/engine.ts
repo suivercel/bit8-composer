@@ -4,10 +4,14 @@ import { SongData, SongTrack } from "@/lib/song/schema";
 import { midiToNoteName } from "./note";
 
 type SynthMap = Record<string, Tone.Synth | Tone.NoiseSynth | null>;
+type StepEvent = {
+  time: string;
+  step: number;
+};
 
 export class AudioEngine {
   private synths: SynthMap = {};
-  private part: Tone.Part<{ step: number }> | null = null;
+  private part: Tone.Part<StepEvent> | null = null;
 
   async init() {
     this.synths = {
@@ -59,12 +63,12 @@ export class AudioEngine {
     }
 
     const totalSteps = song.stepsPerBar * song.bars;
-    const events: Array<[string, { step: number }]> = Array.from({ length: totalSteps }, (_, step) => [
-      `${step}*16n`,
-      { step },
-    ]);
+    const events: StepEvent[] = Array.from({ length: totalSteps }, (_, step) => ({
+      time: `${step}*16n`,
+      step,
+    }));
 
-    this.part = new Tone.Part((time, value) => {
+    this.part = new Tone.Part<StepEvent>((time, value) => {
       onStep(value.step);
 
       song.tracks.forEach((track) => {
