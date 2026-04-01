@@ -1,4 +1,4 @@
-import { Grid3X3, Layers3, SlidersHorizontal } from "lucide-react";
+import { Grid3X3, Layers3, CircleHelp } from "lucide-react";
 import { SmallButton } from "@/components/ui/SmallButton";
 import { ViewTab } from "@/lib/song/schema";
 
@@ -18,7 +18,7 @@ export function ComposerTabs({
         <span className="inline-flex items-center gap-1"><Layers3 className="h-4 w-4" /> Tracks</span>
       </SmallButton>
       <SmallButton onClick={() => onChange("song")} active={value === "song"}>
-        <span className="inline-flex items-center gap-1"><SlidersHorizontal className="h-4 w-4" /> Song</span>
+        <span className="inline-flex items-center gap-1"><CircleHelp className="h-4 w-4" /> Guide</span>
       </SmallButton>
     </div>
   );

@@ -3,6 +3,8 @@ import { NOTE_LABELS, STEPS_PER_BAR } from "@/lib/song/defaults";
 import { SongTrack } from "@/lib/song/schema";
 import { cls } from "@/lib/utils/cls";
 
+const DISPLAY_NOTE_LABELS = [...NOTE_LABELS].reverse();
+
 export function ComposerGrid({
   totalSteps,
   currentStep,
@@ -35,26 +37,34 @@ export function ComposerGrid({
             </div>
           ))}
 
-          {NOTE_LABELS.map((label, pitchIndex) => (
-            <React.Fragment key={label}>
-              <div className="h-9 flex items-center text-[10px] text-zinc-300 pr-1">{label}</div>
-              {Array.from({ length: totalSteps }, (_, stepIndex) => {
-                const active = selectedTrack.steps[stepIndex] === pitchIndex;
-                const divider = (stepIndex + 1) % 4 === 0;
-                return (
-                  <button
-                    key={`${label}-${stepIndex}`}
-                    onClick={() => onSetStep(stepIndex, pitchIndex)}
-                    className={cls(
-                      "h-9 rounded-md border transition",
-                      active ? "bg-zinc-100 border-zinc-100" : "bg-zinc-950 border-zinc-800 hover:border-zinc-600",
-                      divider ? "border-r-2" : "",
-                    )}
-                  />
-                );
-              })}
-            </React.Fragment>
-          ))}
+          {DISPLAY_NOTE_LABELS.map((label, rowIndex) => {
+            const pitchIndex = DISPLAY_NOTE_LABELS.length - 1 - rowIndex;
+            return (
+              <React.Fragment key={label}>
+                <div className="h-9 flex items-center text-[10px] text-zinc-300 pr-1">{label}</div>
+                {Array.from({ length: totalSteps }, (_, stepIndex) => {
+                  const active = selectedTrack.steps[stepIndex] === pitchIndex;
+                  const divider = (stepIndex + 1) % 4 === 0;
+                  return (
+                    <button
+                      key={`${label}-${stepIndex}`}
+                      type="button"
+                      onPointerDown={(event) => {
+                        event.preventDefault();
+                        onSetStep(stepIndex, pitchIndex);
+                      }}
+                      style={{ touchAction: "manipulation" }}
+                      className={cls(
+                        "h-9 rounded-md border transition select-none",
+                        active ? "bg-zinc-100 border-zinc-100" : "bg-zinc-950 border-zinc-800 hover:border-zinc-600",
+                        divider ? "border-r-2" : "",
+                      )}
+                    />
+                  );
+                })}
+              </React.Fragment>
+            );
+          })}
         </div>
       </div>
     </div>

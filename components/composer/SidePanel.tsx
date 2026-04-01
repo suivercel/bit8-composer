@@ -1,7 +1,8 @@
-import { Play, Square, Download, Trash2, Music2 } from "lucide-react";
+import { Play, Pause, Square, Download, Trash2, Music2 } from "lucide-react";
 import { SmallButton } from "@/components/ui/SmallButton";
 import { BAR_OPTIONS } from "@/lib/song/defaults";
 import { RangeField } from "@/components/ui/RangeField";
+import { cls } from "@/lib/utils/cls";
 
 export function SidePanel({
   title,
@@ -38,7 +39,7 @@ export function SidePanel({
         </div>
         <div className="min-w-0">
           <h1 className="text-lg font-semibold leading-none">bit8 composer</h1>
-          <p className="text-[11px] text-zinc-400 mt-1">スマホでも1画面で遊べる4トラック版</p>
+          <p className="text-[11px] text-zinc-400 mt-1">スマホでも1画面で遊べる試作版</p>
         </div>
       </div>
 
@@ -53,14 +54,24 @@ export function SidePanel({
         <div className="grid grid-cols-2 gap-2">
           <button
             onClick={onPlay}
-            className="rounded-xl bg-zinc-100 text-zinc-950 px-3 py-2 text-sm font-medium flex items-center justify-center gap-2"
+            className={cls(
+              "rounded-xl px-3 py-2 text-sm font-medium flex items-center justify-center gap-2 border",
+              isPlaying
+                ? "bg-zinc-100 text-zinc-950 border-zinc-100"
+                : "border-zinc-700 bg-zinc-950 text-zinc-200",
+            )}
           >
-            <Play className="h-4 w-4" />
+            {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
             {isPlaying ? "Pause" : "Play"}
           </button>
           <button
             onClick={onStop}
-            className="rounded-xl border border-zinc-700 px-3 py-2 text-sm font-medium flex items-center justify-center gap-2"
+            className={cls(
+              "rounded-xl px-3 py-2 text-sm font-medium flex items-center justify-center gap-2 border",
+              !isPlaying
+                ? "bg-zinc-100 text-zinc-950 border-zinc-100"
+                : "border-zinc-700 bg-zinc-950 text-zinc-200",
+            )}
           >
             <Square className="h-4 w-4" />
             Stop
