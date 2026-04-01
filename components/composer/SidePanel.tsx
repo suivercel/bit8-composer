@@ -41,7 +41,7 @@ export function SidePanel({
         </div>
         <div className="min-w-0">
           <h1 className="text-lg font-semibold leading-none">bit8 composer</h1>
-          <p className="text-[11px] text-zinc-400 mt-1">スマホでも1画面で遊べる試作版</p>
+          <p className="text-[11px] text-zinc-400 mt-1">Mix Bits. Mint Sound.</p>
         </div>
       </div>
 
