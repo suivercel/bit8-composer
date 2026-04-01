@@ -1,4 +1,4 @@
-import { Play, Pause, Square, Download, Trash2, Music2 } from "lucide-react";
+import { Play, Square, Download, Trash2, Music2 } from "lucide-react";
 import { SmallButton } from "@/components/ui/SmallButton";
 import { BAR_OPTIONS } from "@/lib/song/defaults";
 import { RangeField } from "@/components/ui/RangeField";
@@ -8,8 +8,9 @@ export function SidePanel({
   title,
   tempo,
   bars,
-  noteCount,
+  totalSteps,
   isPlaying,
+  trackCount,
   onTitleChange,
   onTempoChange,
   onBarsChange,
@@ -21,8 +22,9 @@ export function SidePanel({
   title: string;
   tempo: number;
   bars: number;
-  noteCount: number;
+  totalSteps: number;
   isPlaying: boolean;
+  trackCount: number;
   onTitleChange: (next: string) => void;
   onTempoChange: (next: number) => void;
   onBarsChange: (next: number) => void;
@@ -61,8 +63,8 @@ export function SidePanel({
                 : "border-zinc-700 bg-zinc-950 text-zinc-200",
             )}
           >
-            {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-            {isPlaying ? "Pause" : "Play"}
+            <Play className="h-4 w-4" />
+            Play
           </button>
           <button
             onClick={onStop}
@@ -110,10 +112,8 @@ export function SidePanel({
           </div>
         </div>
 
-        <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-3 text-[11px] text-zinc-400 space-y-1">
-          <div>総ノート数: {noteCount}</div>
-          <div>保存は数値中心の軽いJSON</div>
-          <div>Lead + Harmony + Bass + Noise の4トラック</div>
+        <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-3 text-[11px] text-zinc-400">
+          現在の曲の仕様: {bars} bar / {totalSteps} step / {trackCount} track。
         </div>
       </div>
     </aside>

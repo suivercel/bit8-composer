@@ -32,9 +32,6 @@ export function ComposerApp() {
     const stored = loadSongFromLocal();
     if (stored) {
       setSong(stored);
-      if (!stored.tracks.find((track) => track.id === "bass")) {
-        setSong(createDefaultSong());
-      }
     }
   }, []);
 
@@ -66,13 +63,13 @@ export function ComposerApp() {
   }, [song.tracks]);
 
   useEffect(() => {
-    setSong((prev) => {
-      const nextTracks = prev.tracks.map((track) => ({
+    setSong((prev) => ({
+      ...prev,
+      tracks: prev.tracks.map((track) => ({
         ...track,
         steps: resizeSteps(track.steps, totalSteps),
-      }));
-      return { ...prev, tracks: nextTracks };
-    });
+      })),
+    }));
   }, [totalSteps]);
 
   function updateSong(patch: Partial<SongData>) {
@@ -99,18 +96,12 @@ export function ComposerApp() {
   }
 
   async function handlePlay() {
+    if (isPlaying) return;
+
     const engine = engineRef.current;
     if (!engine) return;
 
     await engine.ensureStarted();
-
-    if (isPlaying) {
-      engine.stop();
-      setCurrentStep(0);
-      setIsPlaying(false);
-      return;
-    }
-
     engine.rebuild(song, (step) => setCurrentStep(step));
     engine.play();
     setIsPlaying(true);
@@ -147,8 +138,9 @@ export function ComposerApp() {
           title={song.title}
           tempo={song.tempo}
           bars={song.bars}
-          noteCount={noteCount}
+          totalSteps={totalSteps}
           isPlaying={isPlaying}
+          trackCount={song.tracks.length}
           onTitleChange={(next) => updateSong({ title: next })}
           onTempoChange={(next) => updateSong({ tempo: next })}
           onBarsChange={(next) => updateSong({ bars: next })}
@@ -193,7 +185,7 @@ export function ComposerApp() {
           )}
 
           {viewTab === "tracks" && <TrackPanel tracks={song.tracks} onUpdateTrack={updateTrack} />}
-          {viewTab === "song" && <SongPanel bars={song.bars} totalSteps={totalSteps} />}
+          {viewTab === "song" && <SongPanel />}
         </main>
       </div>
     </div>
