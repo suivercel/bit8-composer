@@ -4,14 +4,10 @@ import { SongData, SongTrack } from "@/lib/song/schema";
 import { midiToNoteName } from "./note";
 
 type SynthMap = Record<string, Tone.Synth | Tone.NoiseSynth | null>;
-type StepEvent = {
-  time: string;
-  step: number;
-};
 
 export class AudioEngine {
   private synths: SynthMap = {};
-  private part: Tone.Part<StepEvent> | null = null;
+  private sequence: Tone.Sequence<number> | null = null;
 
   async init() {
     this.synths = {
@@ -45,7 +41,7 @@ export class AudioEngine {
   }
 
   setTempo(tempo: number) {
-    Tone.Transport.bpm.rampTo(tempo, 0.05);
+    Tone.Transport.bpm.value = tempo;
   }
 
   setTrackWave(track: SongTrack) {
@@ -57,43 +53,42 @@ export class AudioEngine {
   }
 
   rebuild(song: SongData, onStep: (step: number) => void) {
-    if (this.part) {
-      this.part.dispose();
-      this.part = null;
+    if (this.sequence) {
+      this.sequence.dispose();
+      this.sequence = null;
     }
 
     const totalSteps = song.stepsPerBar * song.bars;
-    const events: StepEvent[] = Array.from({ length: totalSteps }, (_, step) => ({
-      time: `${step}*16n`,
-      step,
-    }));
+    const steps = Array.from({ length: totalSteps }, (_, step) => step);
 
-    this.part = new Tone.Part<StepEvent>((time, value) => {
-      onStep(value.step);
+    this.sequence = new Tone.Sequence<number>(
+      (time, step) => {
+        onStep(step);
 
-      song.tracks.forEach((track) => {
-        if (track.muted) return;
-        const pitchIndex = track.steps[value.step];
-        if (pitchIndex == null || pitchIndex < 0) return;
+        song.tracks.forEach((track) => {
+          if (track.muted) return;
+          const pitchIndex = track.steps[step];
+          if (pitchIndex == null || pitchIndex < 0) return;
 
-        if (track.kind === "noise") {
-          const noise = this.synths[track.id] as Tone.NoiseSynth | undefined;
-          if (noise) noise.volume.value = track.volume;
-          noise?.triggerAttackRelease("16n", time, 0.6);
-          return;
-        }
+          if (track.kind === "noise") {
+            const noise = this.synths[track.id] as Tone.NoiseSynth | undefined;
+            if (noise) noise.volume.value = track.volume;
+            noise?.triggerAttackRelease("16n", time, 0.6);
+            return;
+          }
 
-        const midi = 12 * (track.octave + 1) + PITCHES[pitchIndex];
-        const note = midiToNoteName(midi);
-        const synth = this.synths[track.id] as Tone.Synth | undefined;
-        if (synth) synth.volume.value = track.volume;
-        synth?.triggerAttackRelease(note, track.kind === "bass" ? "8n" : "16n", time, 0.8);
-      });
-    }, events);
+          const midi = 12 * (track.octave + 1) + PITCHES[pitchIndex];
+          const note = midiToNoteName(midi);
+          const synth = this.synths[track.id] as Tone.Synth | undefined;
+          if (synth) synth.volume.value = track.volume;
+          synth?.triggerAttackRelease(note, track.kind === "bass" ? "8n" : "16n", time, 0.8);
+        });
+      },
+      steps,
+      "16n",
+    );
 
-    this.part.loop = true;
-    this.part.loopEnd = `${totalSteps}*16n`;
-    this.part.start(0);
+    this.sequence.start(0);
   }
 
   play() {
@@ -106,7 +101,7 @@ export class AudioEngine {
   }
 
   dispose() {
-    this.part?.dispose();
+    this.sequence?.dispose();
     Object.values(this.synths).forEach((s) => s?.dispose());
     Tone.Transport.stop();
     Tone.Transport.cancel();
