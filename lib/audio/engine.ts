@@ -1,9 +1,13 @@
 import * as Tone from "tone";
+
 import { PITCHES } from "@/lib/song/defaults";
 import { SongData, SongTrack } from "@/lib/song/schema";
+
 import { midiToNoteName } from "./note";
 
 type SynthMap = Record<string, Tone.Synth | Tone.NoiseSynth | null>;
+
+type SongProvider = () => SongData;
 
 export class AudioEngine {
   private synths: SynthMap = {};
@@ -41,32 +45,37 @@ export class AudioEngine {
   }
 
   setTempo(tempo: number) {
-    Tone.Transport.bpm.value = tempo;
+    Tone.Transport.bpm.rampTo(tempo, 0.03);
   }
 
   setTrackWave(track: SongTrack) {
     if (track.kind === "noise") return;
+
     const synth = this.synths[track.id] as Tone.Synth | undefined;
     if (!synth) return;
+
     synth.oscillator.type = track.wave === "triangle" ? "triangle" : "square";
     synth.volume.value = track.volume;
   }
 
-  rebuild(song: SongData, onStep: (step: number) => void) {
+  rebuild(getSong: SongProvider, onStep: (step: number) => void) {
+    const firstSong = getSong();
+    const totalSteps = firstSong.stepsPerBar * firstSong.bars;
+    const steps = Array.from({ length: totalSteps }, (_, step) => step);
+
     if (this.sequence) {
       this.sequence.dispose();
       this.sequence = null;
     }
 
-    const totalSteps = song.stepsPerBar * song.bars;
-    const steps = Array.from({ length: totalSteps }, (_, step) => step);
-
     this.sequence = new Tone.Sequence<number>(
       (time, step) => {
+        const song = getSong();
         onStep(step);
 
         song.tracks.forEach((track) => {
           if (track.muted) return;
+
           const pitchIndex = track.steps[step];
           if (pitchIndex == null || pitchIndex < 0) return;
 
@@ -81,7 +90,12 @@ export class AudioEngine {
           const note = midiToNoteName(midi);
           const synth = this.synths[track.id] as Tone.Synth | undefined;
           if (synth) synth.volume.value = track.volume;
-          synth?.triggerAttackRelease(note, track.kind === "bass" ? "8n" : "16n", time, 0.8);
+          synth?.triggerAttackRelease(
+            note,
+            track.kind === "bass" ? "8n" : "16n",
+            time,
+            0.8,
+          );
         });
       },
       steps,
@@ -102,7 +116,7 @@ export class AudioEngine {
 
   dispose() {
     this.sequence?.dispose();
-    Object.values(this.synths).forEach((s) => s?.dispose());
+    Object.values(this.synths).forEach((synth) => synth?.dispose());
     Tone.Transport.stop();
     Tone.Transport.cancel();
   }

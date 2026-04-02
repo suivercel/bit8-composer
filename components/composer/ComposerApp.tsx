@@ -2,30 +2,45 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ComposerGrid } from "./ComposerGrid";
-import { ComposerTabs } from "./ComposerTabs";
-import { SidePanel } from "./SidePanel";
-import { SongPanel } from "./SongPanel";
-import { TrackPanel } from "./TrackPanel";
+import { ComposerHeader } from "./ComposerHeader";
+import { HelpDialog } from "./HelpDialog";
+import { SongMetaDialog } from "./SongMetaDialog";
+import { TrackDock } from "./TrackDock";
+import { TrackSettingsDrawer } from "./TrackSettingsDrawer";
+import { TransportBar } from "./TransportBar";
 import { AudioEngine } from "@/lib/audio/engine";
 import { createDefaultSong, resizeSteps } from "@/lib/song/defaults";
 import { exportSongJson } from "@/lib/song/export";
 import { loadSongFromLocal, saveSongToLocal } from "@/lib/song/songStore";
-import { SongData, SongTrack, ViewTab } from "@/lib/song/schema";
+import { SongData, SongTrack } from "@/lib/song/schema";
+
+const TRACK_ACCENTS: Record<string, string> = {
+  lead: "border-sky-400/50 bg-sky-400/10 text-sky-100",
+  harmony: "border-fuchsia-400/40 bg-fuchsia-400/10 text-fuchsia-100",
+  bass: "border-emerald-400/40 bg-emerald-400/10 text-emerald-100",
+  noise: "border-amber-300/40 bg-amber-300/10 text-amber-100",
+};
 
 export function ComposerApp() {
   const [song, setSong] = useState<SongData>(createDefaultSong());
-  const [viewTab, setViewTab] = useState<ViewTab>("grid");
   const [selectedTrackId, setSelectedTrackId] = useState("lead");
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
+  const [isTrackSettingsOpen, setIsTrackSettingsOpen] = useState(false);
+  const [isSongMetaOpen, setIsSongMetaOpen] = useState(false);
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
 
   const engineRef = useRef<AudioEngine | null>(null);
-
+  const songRef = useRef(song);
   const totalSteps = song.stepsPerBar * song.bars;
-  const selectedTrack = song.tracks.find((t) => t.id === selectedTrackId) ?? song.tracks[0];
+
+  const selectedTrack =
+    song.tracks.find((track) => track.id === selectedTrackId) ?? song.tracks[0];
 
   const noteCount = useMemo(() => {
-    return song.tracks.reduce((sum, track) => sum + track.steps.filter((v) => v >= 0).length, 0);
+    return song.tracks.reduce((sum, track) => {
+      return sum + track.steps.filter((value) => value >= 0).length;
+    }, 0);
   }, [song.tracks]);
 
   useEffect(() => {
@@ -36,6 +51,7 @@ export function ComposerApp() {
   }, []);
 
   useEffect(() => {
+    songRef.current = song;
     saveSongToLocal(song);
   }, [song]);
 
@@ -44,8 +60,10 @@ export function ComposerApp() {
     engineRef.current = engine;
 
     engine.init().then(() => {
-      engine.setTempo(song.tempo);
-      song.tracks.forEach((track) => engine.setTrackWave(track));
+      engine.setTempo(songRef.current.tempo);
+      songRef.current.tracks.forEach((track) => {
+        engine.setTrackWave(track);
+      });
     });
 
     return () => {
@@ -59,7 +77,9 @@ export function ComposerApp() {
   }, [song.tempo]);
 
   useEffect(() => {
-    song.tracks.forEach((track) => engineRef.current?.setTrackWave(track));
+    song.tracks.forEach((track) => {
+      engineRef.current?.setTrackWave(track);
+    });
   }, [song.tracks]);
 
   useEffect(() => {
@@ -79,7 +99,9 @@ export function ComposerApp() {
   function updateTrack(trackId: string, patch: Partial<SongTrack>) {
     setSong((prev) => ({
       ...prev,
-      tracks: prev.tracks.map((track) => (track.id === trackId ? { ...track, ...patch } : track)),
+      tracks: prev.tracks.map((track) =>
+        track.id === trackId ? { ...track, ...patch } : track,
+      ),
     }));
   }
 
@@ -88,21 +110,20 @@ export function ComposerApp() {
       ...prev,
       tracks: prev.tracks.map((track) => {
         if (track.id !== selectedTrackId) return track;
-        const next = [...track.steps];
-        next[stepIndex] = next[stepIndex] === pitchIndex ? -1 : pitchIndex;
-        return { ...track, steps: next };
+        const nextSteps = [...track.steps];
+        nextSteps[stepIndex] = nextSteps[stepIndex] === pitchIndex ? -1 : pitchIndex;
+        return { ...track, steps: nextSteps };
       }),
     }));
   }
 
   async function handlePlay() {
     if (isPlaying) return;
-
     const engine = engineRef.current;
     if (!engine) return;
 
     await engine.ensureStarted();
-    engine.rebuild(song, (step) => setCurrentStep(step));
+    engine.rebuild(() => songRef.current, (step) => setCurrentStep(step));
     engine.play();
     setIsPlaying(true);
   }
@@ -117,10 +138,10 @@ export function ComposerApp() {
     handleStop();
     setSong(createDefaultSong());
     setSelectedTrackId("lead");
+    setIsTrackSettingsOpen(false);
   }
 
   function clearSelectedTrack() {
-    handleStop();
     setSong((prev) => ({
       ...prev,
       tracks: prev.tracks.map((track) =>
@@ -131,63 +152,70 @@ export function ComposerApp() {
     }));
   }
 
+  const accentClass = TRACK_ACCENTS[selectedTrack.id] ?? TRACK_ACCENTS.lead;
+
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100 p-3 sm:p-4 md:p-6">
-      <div className="mx-auto max-w-7xl grid gap-3 lg:grid-cols-[280px_1fr]">
-        <SidePanel
+    <div className="min-h-screen bg-black px-3 py-3 text-zinc-100 sm:px-4 sm:py-4">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-3 rounded-[28px] border border-zinc-800 bg-zinc-950/95 p-3 shadow-2xl shadow-black/30 sm:p-4">
+        <ComposerHeader
           title={song.title}
-          tempo={song.tempo}
-          bars={song.bars}
-          totalSteps={totalSteps}
-          isPlaying={isPlaying}
-          trackCount={song.tracks.length}
-          onTitleChange={(next) => updateSong({ title: next })}
-          onTempoChange={(next) => updateSong({ tempo: next })}
-          onBarsChange={(next) => updateSong({ bars: next })}
-          onPlay={handlePlay}
-          onStop={handleStop}
+          noteCount={noteCount}
           onSave={() => exportSongJson(song)}
           onReset={handleReset}
+          onOpenSongMeta={() => setIsSongMetaOpen(true)}
+          onOpenHelp={() => setIsHelpOpen(true)}
         />
 
-        <main className="rounded-2xl border border-zinc-800 bg-zinc-900/90 p-3 sm:p-4 shadow-2xl overflow-hidden">
-          <ComposerTabs value={viewTab} onChange={setViewTab} />
+        <TransportBar
+          isPlaying={isPlaying}
+          tempo={song.tempo}
+          bars={song.bars}
+          onPlay={handlePlay}
+          onStop={handleStop}
+          onTempoChange={(next) => updateSong({ tempo: next })}
+          onBarsChange={(next) => updateSong({ bars: next as SongData["bars"] })}
+        />
 
-          {viewTab === "grid" && (
-            <div className="space-y-3">
-              <div className="flex gap-2 overflow-x-auto pb-1">
-                {song.tracks.map((track) => (
-                  <button
-                    key={track.id}
-                    onClick={() => setSelectedTrackId(track.id)}
-                    className={`rounded-xl border px-3 py-2 text-xs whitespace-nowrap ${selectedTrackId === track.id ? "border-zinc-100 bg-zinc-100 text-zinc-950" : "border-zinc-700 bg-zinc-950 text-zinc-200"}`}
-                  >
-                    {track.name}
-                  </button>
-                ))}
-              </div>
+        <div className="rounded-[24px] border border-zinc-800 bg-zinc-900/50 p-3 sm:p-4">
+          <ComposerGrid
+            totalSteps={totalSteps}
+            currentStep={currentStep}
+            isPlaying={isPlaying}
+            selectedTrack={selectedTrack}
+            accentClass={accentClass}
+            onSetStep={setStepValue}
+          />
+        </div>
 
-              <ComposerGrid
-                totalSteps={totalSteps}
-                currentStep={currentStep}
-                isPlaying={isPlaying}
-                selectedTrack={selectedTrack}
-                onSetStep={setStepValue}
-              />
-
-              <div className="flex items-center justify-between gap-2">
-                <div className="text-[11px] text-zinc-400">選択中: {selectedTrack.name}</div>
-                <button onClick={clearSelectedTrack} className="rounded-xl border border-zinc-700 px-3 py-2 text-xs">
-                  このトラックを消去
-                </button>
-              </div>
-            </div>
-          )}
-
-          {viewTab === "tracks" && <TrackPanel tracks={song.tracks} onUpdateTrack={updateTrack} />}
-          {viewTab === "song" && <SongPanel />}
-        </main>
+        <TrackDock
+          tracks={song.tracks}
+          selectedTrackId={selectedTrackId}
+          accentMap={TRACK_ACCENTS}
+          onSelectTrack={(trackId) => setSelectedTrackId(trackId)}
+          onOpenSettings={(trackId) => {
+            setSelectedTrackId(trackId);
+            setIsTrackSettingsOpen(true);
+          }}
+        />
       </div>
+
+      <TrackSettingsDrawer
+        open={isTrackSettingsOpen}
+        track={selectedTrack}
+        accentClass={accentClass}
+        onClose={() => setIsTrackSettingsOpen(false)}
+        onUpdateTrack={updateTrack}
+        onClearTrack={clearSelectedTrack}
+      />
+
+      <SongMetaDialog
+        open={isSongMetaOpen}
+        title={song.title}
+        onClose={() => setIsSongMetaOpen(false)}
+        onTitleChange={(next) => updateSong({ title: next })}
+      />
+
+      <HelpDialog open={isHelpOpen} onClose={() => setIsHelpOpen(false)} />
     </div>
   );
 }
