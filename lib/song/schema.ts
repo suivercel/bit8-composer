@@ -1,6 +1,5 @@
 export type WaveType = "square" | "triangle" | "noise";
 export type TrackKind = "lead" | "harmony" | "bass" | "noise";
-export type ViewTab = "grid" | "tracks" | "song";
 
 export type SongTrack = {
   id: string;

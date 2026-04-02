@@ -90,7 +90,6 @@ export function ComposerGrid({
                   <button
                     key={`${label}-${stepIndex}`}
                     type="button"
-                    onClick={() => onSetStep(stepIndex, pitchIndex)}
                     onPointerDown={(event) => {
                       event.preventDefault();
                       onSetStep(stepIndex, pitchIndex);
