@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ComposerGrid } from "./ComposerGrid";
 import { ComposerHeader } from "./ComposerHeader";
 import { HelpDialog } from "./HelpDialog";
@@ -36,12 +36,6 @@ export function ComposerApp() {
 
   const selectedTrack =
     song.tracks.find((track) => track.id === selectedTrackId) ?? song.tracks[0];
-
-  const noteCount = useMemo(() => {
-    return song.tracks.reduce((sum, track) => {
-      return sum + track.steps.filter((value) => value >= 0).length;
-    }, 0);
-  }, [song.tracks]);
 
   useEffect(() => {
     const stored = loadSongFromLocal();
@@ -139,6 +133,7 @@ export function ComposerApp() {
     setSong(createDefaultSong());
     setSelectedTrackId("lead");
     setIsTrackSettingsOpen(false);
+    setIsSongMetaOpen(false);
   }
 
   function clearSelectedTrack() {
@@ -159,9 +154,7 @@ export function ComposerApp() {
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-3 rounded-[28px] border border-zinc-800 bg-zinc-950/95 p-3 shadow-2xl shadow-black/30 sm:p-4">
         <ComposerHeader
           title={song.title}
-          noteCount={noteCount}
           onSave={() => exportSongJson(song)}
-          onReset={handleReset}
           onOpenSongMeta={() => setIsSongMetaOpen(true)}
           onOpenHelp={() => setIsHelpOpen(true)}
         />
@@ -213,6 +206,7 @@ export function ComposerApp() {
         title={song.title}
         onClose={() => setIsSongMetaOpen(false)}
         onTitleChange={(next) => updateSong({ title: next })}
+        onReset={handleReset}
       />
 
       <HelpDialog open={isHelpOpen} onClose={() => setIsHelpOpen(false)} />

@@ -1,17 +1,13 @@
-import { Download, Pencil, RotateCcw, CircleHelp, Music2 } from "lucide-react";
+import { Download, Pencil, CircleHelp, Music2 } from "lucide-react";
 
 export function ComposerHeader({
   title,
-  noteCount,
   onSave,
-  onReset,
   onOpenSongMeta,
   onOpenHelp,
 }: {
   title: string;
-  noteCount: number;
   onSave: () => void;
-  onReset: () => void;
   onOpenSongMeta: () => void;
   onOpenHelp: () => void;
 }) {
@@ -34,10 +30,6 @@ export function ComposerHeader({
       </div>
 
       <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-        <div className="rounded-2xl border border-zinc-800 bg-black/40 px-3 py-2 text-xs text-zinc-300">
-          総ノート数: <span className="font-semibold text-zinc-100">{noteCount}</span>
-        </div>
-
         <button
           type="button"
           onClick={onSave}
@@ -54,15 +46,6 @@ export function ComposerHeader({
         >
           <Pencil className="h-4 w-4" />
           Title
-        </button>
-
-        <button
-          type="button"
-          onClick={onReset}
-          className="inline-flex items-center gap-2 rounded-2xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-300 transition hover:border-zinc-600 hover:text-zinc-100"
-        >
-          <RotateCcw className="h-4 w-4" />
-          Reset
         </button>
 
         <button

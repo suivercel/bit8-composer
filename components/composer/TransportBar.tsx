@@ -68,23 +68,34 @@ export function TransportBar({
         </div>
 
         <div className="rounded-2xl border border-zinc-800 bg-black/30 px-3 py-3">
-          <div className="mb-2 text-xs text-zinc-400">Length</div>
+          <div className="mb-2 flex items-center justify-between text-xs text-zinc-400">
+            <span>Length</span>
+            <span>{isPlaying ? "再生中は変更できません" : ""}</span>
+          </div>
           <div className="flex gap-2">
-            {BAR_OPTIONS.map((value) => (
-              <button
-                key={value}
-                type="button"
-                onClick={() => onBarsChange(value)}
-                className={cls(
-                  "flex-1 rounded-2xl border px-3 py-2 text-sm transition",
-                  bars === value
-                    ? "border-zinc-100 bg-zinc-100 text-zinc-950"
-                    : "border-zinc-700 bg-zinc-950 text-zinc-100 hover:border-zinc-500",
-                )}
-              >
-                {value} bar
-              </button>
-            ))}
+            {BAR_OPTIONS.map((value) => {
+              const selected = bars === value;
+              return (
+                <button
+                  key={value}
+                  type="button"
+                  disabled={isPlaying}
+                  onClick={() => onBarsChange(value)}
+                  className={cls(
+                    "flex-1 rounded-2xl border px-3 py-2 text-sm transition",
+                    isPlaying
+                      ? selected
+                        ? "cursor-not-allowed border-zinc-700 bg-zinc-800 text-zinc-300"
+                        : "cursor-not-allowed border-zinc-800 bg-zinc-950 text-zinc-600"
+                      : selected
+                        ? "border-zinc-100 bg-zinc-100 text-zinc-950"
+                        : "border-zinc-700 bg-zinc-950 text-zinc-100 hover:border-zinc-500",
+                  )}
+                >
+                  {value} bar
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>
