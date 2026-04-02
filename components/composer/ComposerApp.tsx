@@ -15,10 +15,10 @@ import { loadSongFromLocal, saveSongToLocal } from "@/lib/song/songStore";
 import { SongData, SongTrack } from "@/lib/song/schema";
 
 const TRACK_ACCENTS: Record<string, string> = {
-  lead: "border-sky-400/50 bg-sky-400/10 text-sky-100",
-  harmony: "border-fuchsia-400/40 bg-fuchsia-400/10 text-fuchsia-100",
-  bass: "border-emerald-400/40 bg-emerald-400/10 text-emerald-100",
-  noise: "border-amber-300/40 bg-amber-300/10 text-amber-100",
+  lead: "border-sky-400/50 bg-sky-400/12 text-sky-100",
+  harmony: "border-fuchsia-400/45 bg-fuchsia-400/12 text-fuchsia-100",
+  bass: "border-emerald-400/45 bg-emerald-400/12 text-emerald-100",
+  noise: "border-amber-300/45 bg-amber-300/12 text-amber-100",
 };
 
 export function ComposerApp() {
@@ -151,7 +151,7 @@ export function ComposerApp() {
 
   return (
     <div className="min-h-screen bg-black px-3 py-3 text-zinc-100 sm:px-4 sm:py-4">
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-3 rounded-[28px] border border-zinc-800 bg-zinc-950/95 p-3 shadow-2xl shadow-black/30 sm:p-4">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-3 rounded-[22px] border border-zinc-800 bg-zinc-950/95 p-3 shadow-2xl shadow-black/30 sm:p-4">
         <ComposerHeader
           title={song.title}
           onSave={() => exportSongJson(song)}
@@ -169,7 +169,7 @@ export function ComposerApp() {
           onBarsChange={(next) => updateSong({ bars: next as SongData["bars"] })}
         />
 
-        <div className="rounded-[24px] border border-zinc-800 bg-zinc-900/50 p-3 sm:p-4">
+        <div className="rounded-[18px] border border-zinc-800 bg-zinc-900/50 p-3 sm:p-4">
           <ComposerGrid
             totalSteps={totalSteps}
             currentStep={currentStep}

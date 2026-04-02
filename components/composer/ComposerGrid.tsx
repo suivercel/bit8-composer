@@ -21,30 +21,23 @@ export function ComposerGrid({
   onSetStep: (stepIndex: number, pitchIndex: number) => void;
 }) {
   return (
-    <div className="space-y-4 overflow-x-auto">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <div className="text-xs uppercase tracking-[0.18em] text-zinc-500">Selected track</div>
-          <div className={cls("mt-1 inline-flex rounded-full border px-3 py-1 text-sm", accentClass)}>
-            {selectedTrack.name}
-          </div>
-        </div>
-
-        <div className="text-right text-xs text-zinc-400">
-          <div>数字列が再生ヘッドです</div>
-          <div>縦帯で現在位置が分かります</div>
+    <div className="space-y-3 overflow-x-auto">
+      <div>
+        <div className="text-xs uppercase tracking-[0.18em] text-zinc-500">Selected track</div>
+        <div className={cls("mt-1 inline-flex rounded-lg border px-3 py-1 text-sm", accentClass)}>
+          {selectedTrack.name}
         </div>
       </div>
 
       <div
         className="grid min-w-[720px] gap-1.5"
-        style={{ gridTemplateColumns: `40px repeat(${totalSteps}, minmax(28px, 1fr))` }}
+        style={{ gridTemplateColumns: `28px repeat(${totalSteps}, minmax(28px, 1fr))` }}
       >
         <div />
         {Array.from({ length: totalSteps }, (_, step) => {
           const isCurrent = isPlaying && currentStep === step;
           const isPrevious = isPlaying && currentStep === (step + 1) % totalSteps;
-          const isBarEdge = step % STEPS_PER_BAR === 0;
+          const isBarEdge = step > 0 && step % STEPS_PER_BAR === 0;
 
           return (
             <div
@@ -72,7 +65,7 @@ export function ComposerGrid({
             <React.Fragment key={label}>
               <div
                 className={cls(
-                  "flex items-center justify-center text-sm",
+                  "flex items-center justify-center text-xs",
                   isCRow ? "text-zinc-100" : "text-zinc-400",
                 )}
               >
@@ -83,7 +76,7 @@ export function ComposerGrid({
                 const active = selectedTrack.steps[stepIndex] === pitchIndex;
                 const isCurrent = isPlaying && currentStep === stepIndex;
                 const isPrevious = isPlaying && currentStep === (stepIndex + 1) % totalSteps;
-                const isBarEdge = stepIndex % STEPS_PER_BAR === 0;
+                const isBarEdge = stepIndex > 0 && stepIndex % STEPS_PER_BAR === 0;
                 const isQuarterEdge = (stepIndex + 1) % 4 === 0;
 
                 return (
