@@ -17,6 +17,25 @@ function InfoChip({
   );
 }
 
+function CardActionButton({
+  label,
+  onClick,
+}: {
+  label: string;
+  onClick: (event: React.MouseEvent<HTMLButtonElement>) => void;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      onClick={onClick}
+      className="inline-flex items-center justify-center rounded-md border border-zinc-700 bg-zinc-950 p-2 text-zinc-300 transition hover:border-zinc-500 hover:text-white"
+    >
+      <Settings2 className="h-4 w-4" />
+    </button>
+  );
+}
+
 export function TrackDock({
   tracks,
   selectedTrackId,
@@ -52,17 +71,13 @@ export function TrackDock({
                 <div className="text-base font-semibold tracking-tight text-current">{track.name}</div>
               </div>
 
-              <button
-                type="button"
-                aria-label={`${track.name} settings`}
+              <CardActionButton
+                label={`${track.name} settings`}
                 onClick={(event) => {
                   event.stopPropagation();
                   onOpenSettings(track.id);
                 }}
-                className="rounded-md border border-zinc-700 bg-zinc-950 p-2 text-zinc-300 transition hover:border-zinc-500 hover:text-zinc-100"
-              >
-                <Settings2 className="h-4 w-4" />
-              </button>
+              />
             </div>
 
             <div className="mt-3 flex flex-wrap items-center gap-2">
