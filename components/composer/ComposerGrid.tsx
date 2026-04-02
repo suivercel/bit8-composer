@@ -73,8 +73,13 @@ export function ComposerGrid({
     <div className="space-y-4 overflow-x-auto">
       <div className="flex items-center">
         <div>
-          <div className="text-xs uppercase tracking-[0.18em] text-zinc-500">Selected track</div>
-          <div className={cls("mt-1 inline-flex rounded-lg border px-3 py-1 text-sm", accentClass)}>
+          <div className="text-[11px] font-medium text-zinc-400">Selected track</div>
+          <div
+            className={cls(
+              "mt-2 inline-flex rounded-lg border px-3 py-1.5 text-sm font-semibold",
+              accentClass,
+            )}
+          >
             {selectedTrack.name}
           </div>
         </div>
