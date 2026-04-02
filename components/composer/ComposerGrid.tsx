@@ -86,9 +86,11 @@ export function ComposerGrid({
       >
         <div />
         {Array.from({ length: totalSteps }, (_, step) => {
+          const stepNumber = (step % STEPS_PER_BAR) + 1;
           const isCurrent = isPlaying && currentStep === step;
           const isPrevious = isPlaying && currentStep === (step + 1) % totalSteps;
-          const isBarEdge = step > 0 && step % STEPS_PER_BAR === 0;
+          const isQuarterEdge = stepNumber % 4 === 0;
+          const isBarEnd = stepNumber === STEPS_PER_BAR;
 
           return (
             <div
@@ -100,10 +102,14 @@ export function ComposerGrid({
                   : isPrevious
                     ? "border-zinc-600 bg-zinc-800/80 text-zinc-200"
                     : "border-zinc-800 bg-zinc-950 text-zinc-400",
-                isBarEdge ? "border-l-zinc-500" : "",
+                isBarEnd
+                  ? "border-r-zinc-100"
+                  : isQuarterEdge
+                    ? "border-r-zinc-500"
+                    : "",
               )}
             >
-              {(step % STEPS_PER_BAR) + 1}
+              {stepNumber}
             </div>
           );
         })}
@@ -118,10 +124,12 @@ export function ComposerGrid({
               </div>
 
               {Array.from({ length: totalSteps }, (_, stepIndex) => {
+                const stepNumber = (stepIndex % STEPS_PER_BAR) + 1;
                 const active = selectedTrack.steps[stepIndex] === pitchIndex;
                 const isCurrent = isPlaying && currentStep === stepIndex;
                 const isPrevious = isPlaying && currentStep === (stepIndex + 1) % totalSteps;
-                const isBarEdge = stepIndex > 0 && stepIndex % STEPS_PER_BAR === 0;
+                const isQuarterEdge = stepNumber % 4 === 0;
+                const isBarEnd = stepNumber === STEPS_PER_BAR;
 
                 return (
                   <button
@@ -147,7 +155,11 @@ export function ComposerGrid({
                         : "border-zinc-800 bg-zinc-950 hover:border-zinc-600",
                       isCurrent ? "shadow-[inset_0_0_0_1px_rgba(255,255,255,0.6)]" : "",
                       isPrevious ? "bg-zinc-900" : "",
-                      isBarEdge ? "border-l-zinc-500" : "",
+                      isBarEnd
+                        ? "border-r-zinc-100"
+                        : isQuarterEdge
+                          ? "border-r-zinc-500"
+                          : "",
                     )}
                   >
                     {isCurrent ? (
