@@ -1,9 +1,17 @@
-import React from "react";
+import React, { useRef } from "react";
 import { NOTE_LABELS, STEPS_PER_BAR } from "@/lib/song/defaults";
 import { SongTrack } from "@/lib/song/schema";
 import { cls } from "@/lib/utils/cls";
 
 const DISPLAY_NOTE_LABELS = [...NOTE_LABELS].reverse();
+const TAP_MOVE_THRESHOLD = 10;
+
+type GridGestureState = {
+  pointerId: number | null;
+  startX: number;
+  startY: number;
+  moved: boolean;
+};
 
 export function ComposerGrid({
   totalSteps,
@@ -20,6 +28,53 @@ export function ComposerGrid({
   accentClass: string;
   onSetStep: (stepIndex: number, pitchIndex: number) => void;
 }) {
+  const gestureRef = useRef<GridGestureState>({
+    pointerId: null,
+    startX: 0,
+    startY: 0,
+    moved: false,
+  });
+
+  function resetGesture() {
+    gestureRef.current.pointerId = null;
+    gestureRef.current.startX = 0;
+    gestureRef.current.startY = 0;
+    gestureRef.current.moved = false;
+  }
+
+  function handlePointerDown(event: React.PointerEvent<HTMLButtonElement>) {
+    gestureRef.current.pointerId = event.pointerId;
+    gestureRef.current.startX = event.clientX;
+    gestureRef.current.startY = event.clientY;
+    gestureRef.current.moved = false;
+  }
+
+  function handlePointerMove(event: React.PointerEvent<HTMLButtonElement>) {
+    if (gestureRef.current.pointerId !== event.pointerId) return;
+
+    const dx = Math.abs(event.clientX - gestureRef.current.startX);
+    const dy = Math.abs(event.clientY - gestureRef.current.startY);
+
+    if (dx > TAP_MOVE_THRESHOLD || dy > TAP_MOVE_THRESHOLD) {
+      gestureRef.current.moved = true;
+    }
+  }
+
+  function handlePointerUp(
+    event: React.PointerEvent<HTMLButtonElement>,
+    stepIndex: number,
+    pitchIndex: number,
+  ) {
+    if (gestureRef.current.pointerId !== event.pointerId) return;
+
+    const shouldToggle = !gestureRef.current.moved;
+    resetGesture();
+
+    if (shouldToggle) {
+      onSetStep(stepIndex, pitchIndex);
+    }
+  }
+
   return (
     <div className="space-y-3 overflow-x-auto">
       <div>
@@ -83,13 +138,14 @@ export function ComposerGrid({
                   <button
                     key={`${label}-${stepIndex}`}
                     type="button"
-                    onPointerDown={(event) => {
-                      event.preventDefault();
-                      onSetStep(stepIndex, pitchIndex);
-                    }}
-                    style={{ touchAction: "manipulation" }}
+                    onPointerDown={handlePointerDown}
+                    onPointerMove={handlePointerMove}
+                    onPointerUp={(event) => handlePointerUp(event, stepIndex, pitchIndex)}
+                    onPointerCancel={resetGesture}
+                    onPointerLeave={handlePointerMove}
+                    style={{ touchAction: "pan-x" }}
                     className={cls(
-                      "relative h-9 rounded-md border transition",
+                      "relative h-9 rounded-md border transition select-none",
                       active
                         ? "border-zinc-100 bg-zinc-100 text-zinc-950"
                         : "border-zinc-800 bg-zinc-950 hover:border-zinc-600",
