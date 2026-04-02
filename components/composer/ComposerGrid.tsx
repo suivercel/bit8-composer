@@ -4,9 +4,9 @@ import { SongTrack } from "@/lib/song/schema";
 import { cls } from "@/lib/utils/cls";
 
 const DISPLAY_NOTE_LABELS = [...NOTE_LABELS].reverse();
-const TAP_MOVE_THRESHOLD = 10;
+const MOVE_THRESHOLD = 10;
 
-type GridGestureState = {
+type GestureState = {
   pointerId: number | null;
   startX: number;
   startY: number;
@@ -28,59 +28,55 @@ export function ComposerGrid({
   accentClass: string;
   onSetStep: (stepIndex: number, pitchIndex: number) => void;
 }) {
-  const gestureRef = useRef<GridGestureState>({
+  const gestureRef = useRef<GestureState>({
     pointerId: null,
     startX: 0,
     startY: 0,
     moved: false,
   });
 
-  function resetGesture() {
-    gestureRef.current.pointerId = null;
-    gestureRef.current.startX = 0;
-    gestureRef.current.startY = 0;
-    gestureRef.current.moved = false;
+  function beginGesture(pointerId: number, clientX: number, clientY: number) {
+    gestureRef.current = {
+      pointerId,
+      startX: clientX,
+      startY: clientY,
+      moved: false,
+    };
   }
 
-  function handlePointerDown(event: React.PointerEvent<HTMLButtonElement>) {
-    gestureRef.current.pointerId = event.pointerId;
-    gestureRef.current.startX = event.clientX;
-    gestureRef.current.startY = event.clientY;
-    gestureRef.current.moved = false;
-  }
+  function updateGesture(pointerId: number, clientX: number, clientY: number) {
+    if (gestureRef.current.pointerId !== pointerId) return;
 
-  function handlePointerMove(event: React.PointerEvent<HTMLButtonElement>) {
-    if (gestureRef.current.pointerId !== event.pointerId) return;
+    const dx = Math.abs(clientX - gestureRef.current.startX);
+    const dy = Math.abs(clientY - gestureRef.current.startY);
 
-    const dx = Math.abs(event.clientX - gestureRef.current.startX);
-    const dy = Math.abs(event.clientY - gestureRef.current.startY);
-
-    if (dx > TAP_MOVE_THRESHOLD || dy > TAP_MOVE_THRESHOLD) {
+    if (dx > MOVE_THRESHOLD || dy > MOVE_THRESHOLD) {
       gestureRef.current.moved = true;
     }
   }
 
-  function handlePointerUp(
-    event: React.PointerEvent<HTMLButtonElement>,
-    stepIndex: number,
-    pitchIndex: number,
-  ) {
-    if (gestureRef.current.pointerId !== event.pointerId) return;
+  function endGesture(pointerId: number, stepIndex: number, pitchIndex: number) {
+    if (gestureRef.current.pointerId !== pointerId) return;
 
-    const shouldToggle = !gestureRef.current.moved;
-    resetGesture();
-
-    if (shouldToggle) {
+    if (!gestureRef.current.moved) {
       onSetStep(stepIndex, pitchIndex);
     }
+
+    gestureRef.current.pointerId = null;
+  }
+
+  function cancelGesture() {
+    gestureRef.current.pointerId = null;
   }
 
   return (
-    <div className="space-y-3 overflow-x-auto">
-      <div>
-        <div className="text-xs uppercase tracking-[0.18em] text-zinc-500">Selected track</div>
-        <div className={cls("mt-1 inline-flex rounded-lg border px-3 py-1 text-sm", accentClass)}>
-          {selectedTrack.name}
+    <div className="space-y-4 overflow-x-auto">
+      <div className="flex items-center">
+        <div>
+          <div className="text-xs uppercase tracking-[0.18em] text-zinc-500">Selected track</div>
+          <div className={cls("mt-1 inline-flex rounded-lg border px-3 py-1 text-sm", accentClass)}>
+            {selectedTrack.name}
+          </div>
         </div>
       </div>
 
@@ -98,13 +94,13 @@ export function ComposerGrid({
             <div
               key={`timeline-${step}`}
               className={cls(
-                "flex h-8 items-center justify-center rounded-md border text-xs transition",
+                "flex h-8 items-center justify-center rounded-lg border text-xs transition",
                 isCurrent
                   ? "border-zinc-100 bg-zinc-100 text-zinc-950"
                   : isPrevious
                     ? "border-zinc-600 bg-zinc-800/80 text-zinc-200"
                     : "border-zinc-800 bg-zinc-950 text-zinc-400",
-                isBarEdge ? "ml-1.5" : "",
+                isBarEdge ? "border-l-zinc-500" : "",
               )}
             >
               {(step % STEPS_PER_BAR) + 1}
@@ -114,16 +110,10 @@ export function ComposerGrid({
 
         {DISPLAY_NOTE_LABELS.map((label, rowIndex) => {
           const pitchIndex = DISPLAY_NOTE_LABELS.length - 1 - rowIndex;
-          const isCRow = label.startsWith("C");
 
           return (
             <React.Fragment key={label}>
-              <div
-                className={cls(
-                  "flex items-center justify-center text-xs",
-                  isCRow ? "text-zinc-100" : "text-zinc-400",
-                )}
-              >
+              <div className="flex items-center justify-center text-sm text-zinc-400">
                 {label}
               </div>
 
@@ -132,28 +122,32 @@ export function ComposerGrid({
                 const isCurrent = isPlaying && currentStep === stepIndex;
                 const isPrevious = isPlaying && currentStep === (stepIndex + 1) % totalSteps;
                 const isBarEdge = stepIndex > 0 && stepIndex % STEPS_PER_BAR === 0;
-                const isQuarterEdge = (stepIndex + 1) % 4 === 0;
 
                 return (
                   <button
                     key={`${label}-${stepIndex}`}
                     type="button"
-                    onPointerDown={handlePointerDown}
-                    onPointerMove={handlePointerMove}
-                    onPointerUp={(event) => handlePointerUp(event, stepIndex, pitchIndex)}
-                    onPointerCancel={resetGesture}
-                    onPointerLeave={handlePointerMove}
+                    onPointerDown={(event) => {
+                      beginGesture(event.pointerId, event.clientX, event.clientY);
+                    }}
+                    onPointerMove={(event) => {
+                      updateGesture(event.pointerId, event.clientX, event.clientY);
+                    }}
+                    onPointerUp={(event) => {
+                      endGesture(event.pointerId, stepIndex, pitchIndex);
+                    }}
+                    onPointerCancel={() => {
+                      cancelGesture();
+                    }}
                     style={{ touchAction: "pan-x" }}
                     className={cls(
-                      "relative h-9 rounded-md border transition select-none",
+                      "relative h-9 rounded-lg border transition",
                       active
                         ? "border-zinc-100 bg-zinc-100 text-zinc-950"
                         : "border-zinc-800 bg-zinc-950 hover:border-zinc-600",
                       isCurrent ? "shadow-[inset_0_0_0_1px_rgba(255,255,255,0.6)]" : "",
                       isPrevious ? "bg-zinc-900" : "",
-                      isBarEdge ? "ml-1.5" : "",
-                      isQuarterEdge ? "border-r-zinc-600" : "",
-                      isCRow ? "border-t-zinc-700" : "",
+                      isBarEdge ? "border-l-zinc-500" : "",
                     )}
                   >
                     {isCurrent ? (
