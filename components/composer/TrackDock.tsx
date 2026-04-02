@@ -2,6 +2,21 @@ import { Settings2, VolumeX } from "lucide-react";
 import { SongTrack } from "@/lib/song/schema";
 import { cls } from "@/lib/utils/cls";
 
+function InfoChip({
+  label,
+  value,
+}: {
+  label: string;
+  value: string | number;
+}) {
+  return (
+    <span className="inline-flex items-center gap-1 rounded-md border border-zinc-800 bg-black/30 px-2 py-1 text-[11px] font-medium leading-none text-zinc-300">
+      <span className="text-zinc-500">{label}</span>
+      <span className="text-zinc-100">{value}</span>
+    </span>
+  );
+}
+
 export function TrackDock({
   tracks,
   selectedTrackId,
@@ -26,7 +41,7 @@ export function TrackDock({
             type="button"
             onClick={() => onSelectTrack(track.id)}
             className={cls(
-              "rounded-[16px] border bg-zinc-900/80 p-3 text-left transition",
+              "rounded-xl border bg-zinc-900/80 p-3 text-left transition",
               isSelected
                 ? cls(accentMap[track.id], "shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]")
                 : "border-zinc-800 text-zinc-100 hover:border-zinc-600 hover:bg-zinc-900",
@@ -44,26 +59,20 @@ export function TrackDock({
                   event.stopPropagation();
                   onOpenSettings(track.id);
                 }}
-                className="rounded-lg border border-zinc-700 bg-zinc-950 p-2 text-zinc-300 transition hover:border-zinc-500 hover:text-zinc-100"
+                className="rounded-md border border-zinc-700 bg-zinc-950 p-2 text-zinc-300 transition hover:border-zinc-500 hover:text-zinc-100"
               >
                 <Settings2 className="h-4 w-4" />
               </button>
             </div>
 
-            <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-zinc-300">
-              <span className="rounded-lg border border-zinc-800 bg-black/30 px-2 py-1">
-                Wave: {track.wave}
-              </span>
-              <span className="rounded-lg border border-zinc-800 bg-black/30 px-2 py-1">
-                Vol: {track.volume}
-              </span>
-              <span className="rounded-lg border border-zinc-800 bg-black/30 px-2 py-1">
-                Oct: {track.octave}
-              </span>
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <InfoChip label="Wave" value={track.wave} />
+              <InfoChip label="Vol" value={track.volume} />
+              <InfoChip label="Oct" value={track.octave} />
               {track.muted ? (
-                <span className="inline-flex items-center gap-1 rounded-lg border border-zinc-700 bg-zinc-950 px-2 py-1 text-zinc-300">
+                <span className="inline-flex items-center gap-1 rounded-md border border-zinc-700 bg-zinc-950 px-2 py-1 text-[11px] font-medium leading-none text-zinc-300">
                   <VolumeX className="h-3.5 w-3.5" />
-                  Muted
+                  <span className="text-zinc-100">Muted</span>
                 </span>
               ) : null}
             </div>
