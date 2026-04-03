@@ -1,4 +1,5 @@
-import { Settings2, VolumeX } from "lucide-react";
+import React from "react";
+import { Settings2, Volume2, VolumeX } from "lucide-react";
 import { SongTrack } from "@/lib/song/schema";
 import { cls } from "@/lib/utils/cls";
 
@@ -36,18 +37,45 @@ function CardActionButton({
   );
 }
 
+function MuteButton({
+  muted,
+  onClick,
+}: {
+  muted: boolean;
+  onClick: (event: React.MouseEvent<HTMLButtonElement>) => void;
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={muted}
+      onClick={onClick}
+      className={cls(
+        "inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[11px] font-medium leading-none transition",
+        muted
+          ? "border-zinc-100 bg-zinc-100 text-zinc-950"
+          : "border-zinc-700 bg-zinc-950 text-zinc-300 hover:border-zinc-500 hover:text-white",
+      )}
+    >
+      {muted ? <VolumeX className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />}
+      <span>{muted ? "Muted" : "Mute"}</span>
+    </button>
+  );
+}
+
 export function TrackDock({
   tracks,
   selectedTrackId,
   accentMap,
   onSelectTrack,
   onOpenSettings,
+  onToggleMute,
 }: {
   tracks: SongTrack[];
   selectedTrackId: string;
   accentMap: Record<string, string>;
   onSelectTrack: (trackId: string) => void;
   onOpenSettings: (trackId: string) => void;
+  onToggleMute: (trackId: string) => void;
 }) {
   return (
     <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
@@ -84,12 +112,25 @@ export function TrackDock({
               <InfoChip label="Wave" value={track.wave} />
               <InfoChip label="Vol" value={track.volume} />
               <InfoChip label="Oct" value={track.octave} />
-              {track.muted ? (
-                <span className="inline-flex items-center gap-1 rounded-md border border-zinc-700 bg-zinc-950 px-2 py-1 text-[11px] font-medium leading-none text-zinc-300">
-                  <VolumeX className="h-3.5 w-3.5" />
-                  <span className="text-zinc-100">Muted</span>
-                </span>
-              ) : null}
+            </div>
+
+            <div className="mt-3 flex items-center justify-between gap-3">
+              <MuteButton
+                muted={track.muted}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onToggleMute(track.id);
+                }}
+              />
+
+              <span
+                className={cls(
+                  "text-[11px] font-medium leading-none",
+                  track.muted ? "text-zinc-500" : "text-zinc-600",
+                )}
+              >
+                {track.muted ? "This track is muted" : "Tap to mute quickly"}
+              </span>
             </div>
           </button>
         );
