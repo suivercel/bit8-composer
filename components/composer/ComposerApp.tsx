@@ -99,6 +99,13 @@ export function ComposerApp() {
     }));
   }
 
+  function toggleTrackMute(trackId: string) {
+    const track = song.tracks.find((item) => item.id === trackId);
+    if (!track) return;
+
+    updateTrack(trackId, { muted: !track.muted });
+  }
+
   function setStepValue(stepIndex: number, pitchIndex: number) {
     setSong((prev) => ({
       ...prev,
@@ -189,6 +196,7 @@ export function ComposerApp() {
             setSelectedTrackId(trackId);
             setIsTrackSettingsOpen(true);
           }}
+          onToggleMute={toggleTrackMute}
         />
       </div>
 
